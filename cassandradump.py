@@ -296,6 +296,11 @@ def setup_cluster():
         elif args.protocol_version == '2':
             ap = PlainTextAuthProvider(username=args.username, password=args.password)
             cluster = Cluster(contact_points=nodes, protocol_version=2, auth_provider=ap, load_balancing_policy=cassandra.policies.WhiteListRoundRobinPolicy(nodes))
+    elif args.protocol_version is not None and args.nopassword is not None:
+        if args.protocol_version == '1': 
+            cluster = Cluster(contact_points=nodes, protocol_version=1, load_balancing_policy=cassandra.policies.WhiteListRoundRobinPolicy(nodes))
+        elif args.protocol_version == '2':
+            cluster = Cluster(contact_points=nodes, protocol_version=2, load_balancing_policy=cassandra.policies.WhiteListRoundRobinPolicy(nodes))
     else:
         cluster = Cluster(contact_points=nodes, load_balancing_policy=cassandra.policies.WhiteListRoundRobinPolicy(nodes))
     session = cluster.connect()
@@ -328,6 +333,7 @@ def main():
     parser.add_argument('--quiet', help='quiet progress logging', action='store_true')
     parser.add_argument('--sync', help='import data in synchronous mode (default asynchronous)', action='store_true')
     parser.add_argument('--username', help='set username for auth (only if protocol_version is set)')
+    parser.add_argument('--nopassword', help="If there is no need for password and the protocol_version is set", action='store_true')
     args = parser.parse_args()
 
     if args.import_file is None and args.export_file is None:
@@ -338,7 +344,7 @@ def main():
         sys.stderr.write('--import-file and --export-file can\'t be specified at the same time\n')
         sys.exit(1)
 
-    if args.protocol_version is not None:
+    if args.protocol_version is not None and args.nopassword is None:
         if args.username is None or args.password is None:
             sys.stderr.write('--username and --password must be specified\n')
             sys.exit(1)
